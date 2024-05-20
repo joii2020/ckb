@@ -13,7 +13,11 @@ use std::net::Ipv4Addr;
 pub fn fuzz_compress(data: &[u8]) {
     let raw_data = Message::from_raw(Bytes::from(data.to_vec())).compress();
     let msg = Message::from_compressed(BytesMut::from(raw_data.as_ref()));
-    assert!(!msg.compress_flag());
+    if data.len() >= 1024 {
+        assert!(msg.compress_flag());
+    } else {
+        assert!(!msg.compress_flag());
+    }
     let demsg = msg.decompress().unwrap();
     assert_eq!(Bytes::from(data.to_vec()), demsg);
 
@@ -99,9 +103,7 @@ pub fn fuzz_peer_registry(data: &[u8]) {
         } else {
             let mut addrs = Vec::<[u8; 32]>::new();
             let index = 0;
-            while data.len() >= (index + 1) * 32 {
-
-            }
+            while data.len() >= (index + 1) * 32 {}
 
             addrs.iter().map(|f| new_multiaddr(f)).collect()
         }

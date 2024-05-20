@@ -40,3 +40,40 @@ proptest! {
         assert_eq!(addrs.len(), count);
     }
 }
+
+#[test]
+fn test_eee() {
+    let mut addr_manager = AddrManager::default();
+
+    let addr1 = {
+        let peer_id =
+            PeerId::from_bytes(vec![vec![0x12], vec![0x20], vec![1u8; 32]].concat()).unwrap();
+        AddrInfo::new(
+            format!("/ip4/127.0.0.1/tcp/42/p2p/{}", peer_id.to_base58())
+                .parse()
+                .unwrap(),
+            0,
+            0,
+            0,
+        )
+    };
+    let addr2 = {
+        let peer_id =
+            PeerId::from_bytes(vec![vec![0x12], vec![0x20], vec![1u8; 32]].concat()).unwrap();
+        AddrInfo::new(
+            format!("/ip4/127.0.0.1/tcp/43/p2p/{}", peer_id.to_base58())
+                .parse()
+                .unwrap(),
+            0,
+            0,
+            0,
+        )
+    };
+
+    addr_manager.add(addr1.clone());
+    addr_manager.add(addr2.clone());
+    assert_eq!(2, addr_manager.count());
+    
+    addr_manager.remove(&addr1.addr);
+    assert_eq!(1, addr_manager.count());
+}

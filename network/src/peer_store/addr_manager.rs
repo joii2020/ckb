@@ -50,6 +50,10 @@ impl AddrManager {
         let mut rng = rand::thread_rng();
         let now_ms = ckb_systemtime::unix_time_as_millis();
         for i in 0..self.random_ids.len() {
+            if addr_infos.len() == count {
+                break;
+            }
+
             // reuse the for loop to shuffle random ids
             // https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
             let j = rng.gen_range(i, self.random_ids.len());
@@ -67,9 +71,6 @@ impl AddrManager {
                 {
                     duplicate_ips.insert(ip);
                     addr_infos.push(addr_info);
-                }
-                if addr_infos.len() == count {
-                    break;
                 }
             }
         }
