@@ -9,6 +9,8 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
+rand = "0.7"
+ckb-systemtime = { path = "../../util/systemtime/" }
 
 [dependencies.ckb-network]
 path = ".."
