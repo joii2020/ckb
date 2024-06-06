@@ -37,6 +37,14 @@ impl<'a> BufManager<'a> {
         T::from_bytes(&self.get_buf(T::type_size()))
     }
 
+    pub fn other(&mut self) -> Vec<u8> {
+        if self.is_end() {
+            return Vec::new();
+        }
+
+        self.buf[self.offset..].to_vec()
+    }
+
     pub fn is_end(&self) -> bool {
         self.offset >= self.buf.len()
     }
@@ -87,6 +95,16 @@ impl FromBytes<u128> for u128 {
         u128::from_le_bytes(d.try_into().unwrap())
     }
 }
+impl FromBytes<usize> for usize {
+    fn type_size() -> usize {
+        std::mem::size_of::<usize>()
+    }
+    fn from_bytes(d: &[u8]) -> usize {
+        usize::from_le_bytes(d.try_into().unwrap())
+    }
+}
+
+// fuzz_peer_store
 impl FromBytes<Flags> for Flags {
     fn type_size() -> usize {
         1
@@ -99,7 +117,6 @@ impl FromBytes<Flags> for Flags {
         }
     }
 }
-
 impl FromBytes<std::net::Ipv4Addr> for std::net::Ipv4Addr {
     fn type_size() -> usize {
         4
@@ -116,7 +133,6 @@ impl FromBytes<std::net::Ipv6Addr> for std::net::Ipv6Addr {
         std::net::Ipv6Addr::from(u128::from_bytes(d))
     }
 }
-
 impl FromBytes<ipnetwork::Ipv4Network> for ipnetwork::Ipv4Network {
     fn type_size() -> usize {
         4
