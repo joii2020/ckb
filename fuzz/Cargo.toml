@@ -31,6 +31,9 @@ path = "../sync"
 [dependencies.ckb-shared]
 path = "../shared"
 
+[dependencies.ckb-chain-spec]
+path = "../spec"
+
 [dependencies.ckb-launcher]
 path = "../util/launcher/"
 features = ["fuzz"]
@@ -43,6 +46,9 @@ path = "../util/app-config"
 
 [dependencies.ckb-build-info]
 path = "../util/build-info"
+
+[dependencies.ckb-async-runtime]
+path = "../util/runtime"
 
 # Prevent this from interfering with workspaces
 [workspace]
@@ -80,3 +86,6 @@ name = "fuzz_p2p"
 path = "fuzz_targets/fuzz_p2p.rs"
 test = false
 doc = false
+
+[replace]
+"ckb-rocksdb:0.21.1" = {path = '../../rust-rocksdb/'}

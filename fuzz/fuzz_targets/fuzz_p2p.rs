@@ -9,7 +9,7 @@ use ckb_shared::Shared;
 use ckb_sync::SyncShared;
 use futures::Future;
 use std::{pin::Pin, sync::Arc, time::Duration};
-use tokio::runtime::Runtime;
+use tokio::runtime::{Handle, Runtime};
 
 struct TestProtocolCtx {
     protocol: ckb_network::ProtocolId,
@@ -204,12 +204,22 @@ fn get_proto_type(data: &mut BufManager) -> Result<SupportProtocols, ()> {
     }
 }
 
-fn get_shared(data: &mut BufManager) -> Result<Shared, ()> {
+fn get_shared(data: &mut BufManager, handle: &Handle) -> Result<Shared, ()> {
     if data.is_end() {
         return Err(());
     }
+    let builder = ckb_shared::shared_builder::SharedBuilder::with_temp_db();
+    // let builder = ckb_shared::shared_builder::SharedBuilder::new(
+    //     "ckb",
+    //     std::path::Path::new("./"),
+    //     &ckb_app_config::DBConfig::default(),
+    //     None,
+    //     ckb_async_runtime::Handle::new(handle.clone(), None),
+    //     ckb_chain_spec::consensus::Consensus::default(),
+    // )
+    // .unwrap();
 
-    let r = ckb_shared::shared_builder::SharedBuilder::with_temp_db().build();
+    let r = builder.build();
 
     if r.is_err() {
         return Err(());
@@ -218,12 +228,12 @@ fn get_shared(data: &mut BufManager) -> Result<Shared, ()> {
     Ok(r.unwrap().0)
 }
 
-fn get_sync_shared(data: &mut BufManager) -> Result<SyncShared, ()> {
+fn get_sync_shared(data: &mut BufManager, handle: &Handle) -> Result<SyncShared, ()> {
     if data.is_end() {
         return Err(());
     }
 
-    let shared = get_shared(data)?;
+    let shared = get_shared(data, handle)?;
 
     let sync_config = ckb_app_config::SyncConfig::default();
     let (_, relay_tx_receiver) = ckb_channel::bounded(0);
@@ -257,13 +267,17 @@ fn get_network_alert_config(data: &mut BufManager) -> Result<NetworkAlertConfig,
 }
 
 fn run(data: &[u8]) -> Result<(), ()> {
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .build()
+        .unwrap();
+
     let mut data = BufManager::new(data);
 
     let t = get_proto_type(&mut data)?;
 
     let sync_shared = match t {
         SupportProtocols::Time => None,
-        _ => Some(Arc::new(get_sync_shared(&mut data)?)),
+        _ => Some(Arc::new(get_sync_shared(&mut data, rt.handle())?)),
     };
 
     let (version, alert_cfg) = match t {
@@ -280,7 +294,6 @@ fn run(data: &[u8]) -> Result<(), ()> {
     }
     let mut proto = proto.unwrap();
 
-    let rt = Runtime::new().unwrap();
     rt.block_on(async {
         let nc = Arc::new(TestProtocolCtx { protocol: 0.into() });
 
